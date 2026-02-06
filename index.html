@@ -141,6 +141,23 @@
         [0,4,8],[2,4,6]
     ];
 
+    // 🔊 SOUND EFFECTS (Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, duration = 0.15) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001, audioCtx.currentTime + duration
+        );
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
     function startGame(mode) {
         gameMode = mode;
         board = ["","","","","","","","",""];
@@ -156,20 +173,26 @@
     function play(index) {
         if (!gameActive || board[index] !== "") return;
 
+        playSound(600); // click sound
+
         board[index] = currentPlayer;
         const cell = document.getElementsByClassName("cell")[index];
         cell.innerText = currentPlayer;
         cell.classList.add(currentPlayer === "X" ? "x" : "o");
 
-        if (checkWin(currentPlayer)) {
+        const winPattern = getWinPattern(currentPlayer);
+        if (winPattern) {
+            highlightWin(winPattern);
             document.getElementById("status").innerText =
-                `🎉 ${currentPlayer === "X" ? "X" : "O"} Wins!`;
+                `🎉 ${currentPlayer} Wins!`;
+            playSound(900, 0.4); // win sound
             gameActive = false;
             return;
         }
 
         if (!board.includes("")) {
             document.getElementById("status").innerText = "😐 It's a Draw!";
+            playSound(300, 0.4); // draw sound
             gameActive = false;
             return;
         }
@@ -191,18 +214,24 @@
 
         let move = empty[Math.floor(Math.random()*empty.length)];
         board[move] = "O";
+
         const cell = document.getElementsByClassName("cell")[move];
         cell.innerText = "O";
         cell.classList.add("o");
+        playSound(450);
 
-        if (checkWin("O")) {
+        const winPattern = getWinPattern("O");
+        if (winPattern) {
+            highlightWin(winPattern);
             document.getElementById("status").innerText = "💻 Computer Wins!";
+            playSound(900, 0.4);
             gameActive = false;
             return;
         }
 
         if (!board.includes("")) {
             document.getElementById("status").innerText = "😐 It's a Draw!";
+            playSound(300, 0.4);
             gameActive = false;
             return;
         }
@@ -211,8 +240,16 @@
         updateStatus();
     }
 
-    function checkWin(player) {
-        return winPatterns.some(p => p.every(i => board[i] === player));
+    function getWinPattern(player) {
+        return winPatterns.find(p => p.every(i => board[i] === player));
+    }
+
+    function highlightWin(pattern) {
+        pattern.forEach(i => {
+            const cell = document.getElementsByClassName("cell")[i];
+            cell.style.boxShadow = "0 0 25px #00ffcc";
+            cell.style.transform = "scale(1.15)";
+        });
     }
 
     function updateStatus() {
@@ -238,9 +275,12 @@
         Array.from(document.getElementsByClassName("cell")).forEach(c=>{
             c.innerText="";
             c.classList.remove("x","o");
+            c.style.boxShadow = "none";
+            c.style.transform = "scale(1)";
         });
     }
 </script>
+
 
 </body>
 </html>

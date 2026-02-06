@@ -1,66 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tic Tac Toe – 2 Player</title>
+    <title>Tic Tac Toe</title>
     <style>
         body {
-            text-align: center;
-            font-family: Arial;
-            background: #121212;
-            color: white;
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
         }
+
+        .container {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px 25px;
+            width: 340px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 28px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            border: none;
+            border-radius: 30px;
+            padding: 12px 20px;
+            font-size: 15px;
+            margin: 8px 5px;
+            cursor: pointer;
+            color: #333;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
         .board {
             display: grid;
-            grid-template-columns: repeat(3, 100px);
-            gap: 10px;
+            grid-template-columns: repeat(3, 90px);
+            gap: 12px;
             justify-content: center;
-            margin: 30px auto;
+            margin: 20px auto;
         }
+
         .cell {
-            width: 100px;
-            height: 100px;
-            background: #1f1f1f;
-            font-size: 48px;
+            width: 90px;
+            height: 90px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.2);
+            font-size: 42px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            border-radius: 10px;
+            transition: 0.25s;
         }
+
         .cell:hover {
-            background: #333;
+            background: rgba(255,255,255,0.35);
+            transform: scale(1.05);
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: none;
+
+        .x {
+            color: #ffeb3b;
+            text-shadow: 0 0 10px rgba(255,235,59,0.9);
+        }
+
+        .o {
+            color: #00e5ff;
+            text-shadow: 0 0 10px rgba(0,229,255,0.9);
+        }
+
+        .footer-btns {
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
-<h1>Tic Tac Toe</h1>
-<h2 id="status">Player X Turn</h2>
+<div class="container">
 
-<div class="board">
-    <div class="cell" onclick="play(0)"></div>
-    <div class="cell" onclick="play(1)"></div>
-    <div class="cell" onclick="play(2)"></div>
-    <div class="cell" onclick="play(3)"></div>
-    <div class="cell" onclick="play(4)"></div>
-    <div class="cell" onclick="play(5)"></div>
-    <div class="cell" onclick="play(6)"></div>
-    <div class="cell" onclick="play(7)"></div>
-    <div class="cell" onclick="play(8)"></div>
+    <!-- MENU -->
+    <div id="menu">
+        <h1>Tic Tac Toe</h1>
+        <h2>Choose Game Mode</h2>
+        <button onclick="startGame('friend')">👥 Play with Friend</button>
+        <button onclick="startGame('computer')">🤖 Play with Computer</button>
+    </div>
+
+    <!-- GAME -->
+    <div id="game" class="hidden">
+        <h2 id="status"></h2>
+        <div class="board">
+            <div class="cell" onclick="play(0)"></div>
+            <div class="cell" onclick="play(1)"></div>
+            <div class="cell" onclick="play(2)"></div>
+            <div class="cell" onclick="play(3)"></div>
+            <div class="cell" onclick="play(4)"></div>
+            <div class="cell" onclick="play(5)"></div>
+            <div class="cell" onclick="play(6)"></div>
+            <div class="cell" onclick="play(7)"></div>
+            <div class="cell" onclick="play(8)"></div>
+        </div>
+        <div class="footer-btns">
+            <button onclick="resetGame()">Restart</button>
+            <button onclick="backToMenu()">Menu</button>
+        </div>
+    </div>
+
 </div>
 
-<button onclick="resetGame()">Restart</button>
-
 <script>
-    let board = ["","","","","","","","",""];
-    let currentPlayer = "X";
-    let gameActive = true;
+    let board, currentPlayer, gameMode, gameActive;
 
     const winPatterns = [
         [0,1,2],[3,4,5],[6,7,8],
@@ -68,43 +141,104 @@
         [0,4,8],[2,4,6]
     ];
 
+    function startGame(mode) {
+        gameMode = mode;
+        board = ["","","","","","","","",""];
+        currentPlayer = "X";
+        gameActive = true;
+
+        document.getElementById("menu").classList.add("hidden");
+        document.getElementById("game").classList.remove("hidden");
+        clearBoard();
+        updateStatus();
+    }
+
     function play(index) {
-        if (board[index] !== "" || !gameActive) return;
+        if (!gameActive || board[index] !== "") return;
 
         board[index] = currentPlayer;
-        document.getElementsByClassName("cell")[index].innerText = currentPlayer;
+        const cell = document.getElementsByClassName("cell")[index];
+        cell.innerText = currentPlayer;
+        cell.classList.add(currentPlayer === "X" ? "x" : "o");
 
-        if (checkWin()) {
+        if (checkWin(currentPlayer)) {
             document.getElementById("status").innerText =
-                `🎉 Player ${currentPlayer} Wins!`;
+                `🎉 ${currentPlayer === "X" ? "X" : "O"} Wins!`;
             gameActive = false;
             return;
         }
 
         if (!board.includes("")) {
-            document.getElementById("status").innerText = "😐 Draw!";
+            document.getElementById("status").innerText = "😐 It's a Draw!";
             gameActive = false;
             return;
         }
 
-        currentPlayer = currentPlayer === "X" ? "O" : "X";
-        document.getElementById("status").innerText =
-            `Player ${currentPlayer} Turn`;
+        if (gameMode === "computer" && currentPlayer === "X") {
+            currentPlayer = "O";
+            updateStatus();
+            setTimeout(computerMove, 500);
+        } else {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            updateStatus();
+        }
     }
 
-    function checkWin() {
-        return winPatterns.some(p =>
-            p.every(i => board[i] === currentPlayer)
-        );
+    function computerMove() {
+        let empty = board
+            .map((v,i)=>v===""?i:null)
+            .filter(v=>v!==null);
+
+        let move = empty[Math.floor(Math.random()*empty.length)];
+        board[move] = "O";
+        const cell = document.getElementsByClassName("cell")[move];
+        cell.innerText = "O";
+        cell.classList.add("o");
+
+        if (checkWin("O")) {
+            document.getElementById("status").innerText = "💻 Computer Wins!";
+            gameActive = false;
+            return;
+        }
+
+        if (!board.includes("")) {
+            document.getElementById("status").innerText = "😐 It's a Draw!";
+            gameActive = false;
+            return;
+        }
+
+        currentPlayer = "X";
+        updateStatus();
+    }
+
+    function checkWin(player) {
+        return winPatterns.some(p => p.every(i => board[i] === player));
+    }
+
+    function updateStatus() {
+        if (gameMode === "computer") {
+            document.getElementById("status").innerText =
+                currentPlayer === "X" ? "Your Turn (X)" : "Computer Turn (O)";
+        } else {
+            document.getElementById("status").innerText =
+                `Player ${currentPlayer} Turn`;
+        }
     }
 
     function resetGame() {
-        board = ["","","","","","","","",""];
-        currentPlayer = "X";
-        gameActive = true;
-        document.getElementById("status").innerText = "Player X Turn";
-        Array.from(document.getElementsByClassName("cell"))
-            .forEach(c => c.innerText = "");
+        startGame(gameMode);
+    }
+
+    function backToMenu() {
+        document.getElementById("game").classList.add("hidden");
+        document.getElementById("menu").classList.remove("hidden");
+    }
+
+    function clearBoard() {
+        Array.from(document.getElementsByClassName("cell")).forEach(c=>{
+            c.innerText="";
+            c.classList.remove("x","o");
+        });
     }
 </script>
 
